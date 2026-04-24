@@ -1,7 +1,12 @@
 import express from 'express'
 import cors from 'cors'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import 'dotenv/config'
 import { ELECTION_SYSTEM_PROMPT } from '../src/config/prompts.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const app = express()
 app.use(express.json())
@@ -9,6 +14,10 @@ app.use(cors({
   origin: ['http://localhost:5173', 'https://elected-app-trqh3svs5a-uc.a.run.app']
 }))
 
+// Serve static files from the 'dist' directory
+app.use(express.static(path.join(__dirname, '../dist')))
+
+// API Routes
 app.post('/api/chat', async (req, res) => {
   const { messages } = req.body
   if (!Array.isArray(messages) || messages.length === 0)
@@ -43,4 +52,10 @@ app.post('/api/chat', async (req, res) => {
 })
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }))
+
+// Fallback to index.html for React Router (placed after all other routes)
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'))
+})
+
 app.listen(process.env.PORT || 3001, () => console.log('API server ready'))
